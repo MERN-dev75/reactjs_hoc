@@ -9,8 +9,8 @@ const withAuthToken = (WrappedComponent) => {
     useEffect(() => {
       const checkAndRefreshToken = async () => {
         try {
-          const accessToken = localStorage.getItem("accessToken");
-          const refreshToken = localStorage.getItem("refreshToken");
+          const accessToken = sessionStorage.getItem("accessToken");
+          const refreshToken = sessionStorage.getItem("refreshToken");
 
           if (!accessToken) {
             console.warn("No access token found. Redirecting to login.");
@@ -26,7 +26,7 @@ const withAuthToken = (WrappedComponent) => {
             console.log("Access token expired. Attempting to refresh...");
             const newAccessToken = await refreshAccessToken(refreshToken);
             if (newAccessToken) {
-              localStorage.setItem("accessToken", newAccessToken);
+              sessionStorage.setItem("accessToken", newAccessToken);
               setIsAuthenticated(true);
             } else {
               redirectToLogin();
@@ -49,7 +49,13 @@ const withAuthToken = (WrappedComponent) => {
     const verifyAccessToken = async (token) => {
       try {
         // Example: Make an API call to verify the access token
-        const response = await axios.post("/api/verify-token", { token });
+        const response = await axios.post("http://localhost:4000/api/verfyJWT", { token },
+         { headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+        );
         return response.status === 200; // Token is valid
       } catch (error) {
         return false; // Token is invalid or expired
@@ -58,7 +64,7 @@ const withAuthToken = (WrappedComponent) => {
 
     const refreshAccessToken = async (refreshToken) => {
       try {
-        const response = await axios.post("/api/refresh-token", { refreshToken });
+        const response = await axios.post("http://localhost:4000/api/refreshAccessToken", { refreshToken });
         return response.data.accessToken; // Return the new access token
       } catch (error) {
         console.error("Failed to refresh access token:", error);
@@ -67,9 +73,9 @@ const withAuthToken = (WrappedComponent) => {
     };
 
     const redirectToLogin = () => {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      window.location.href = "/login"; // Redirect to login page
+      sessionStorage.removeItem("accessToken");
+      sessionStorage.removeItem("refreshToken");
+      // window.location.href = "/login"; // Redirect to login page
     };
 
     if (loading) {
